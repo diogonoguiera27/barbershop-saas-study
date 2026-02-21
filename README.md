@@ -1,3 +1,13 @@
+# Aula zero 
+
+- [x] Setup do Banco
+- [x] Seeding do Banco ( Coloca Dados )
+- [ ] Introdução ao Next.js
+- [ ] Tawind e Shadcn
+- [ ] Git Hooks
+
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
