@@ -1,5 +1,5 @@
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/_lib/prisma";
 
 async function seedDatabase() {
   try {
