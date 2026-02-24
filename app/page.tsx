@@ -1,6 +1,9 @@
 "use client"
 
+import { Avatar, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import Header from "@/components/ui/header"
 import { Input } from "@/components/ui/input"
 import { SearchIcon } from "lucide-react"
@@ -13,9 +16,11 @@ const Home = () => {
 
       <Header />
       <div className="p-5">
+        {/*  Texto */}
         <h2 className="text-xl font-bold">Ola, felipe!</h2>
         <p>Segunda Feira, 05 de agosto</p>
 
+        {/*Busca */}
         <div className="mt-6 flex items-center gap-2">
           <Input placeholder="Faça Sua busca..." />
           <Button>
@@ -23,6 +28,7 @@ const Home = () => {
           </Button>
         </div>
 
+        {/* Imagem  */}
         <div className="relative mt-6 h-[150px] w-full">
           <Image
             alt="Agende nos Melhores com FSW Barber"
@@ -31,6 +37,31 @@ const Home = () => {
             className="rounded-xl object-cover"
           />
         </div>
+
+        {/* Agendamento */}
+
+        <Card className="mt-6">
+          <CardContent className="flex justify-between p-0">
+            {/* Esquerdo */}
+            <div className="flex flex-col gap-2 py-5 pl-5">
+              <Badge className="w-fit">Confirmado</Badge>
+              <h3 className="font-semibold">Corte de Cabelo</h3>
+
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src="https://utfs.io/f/c97a2dc9-cf62-468b-a851-bfd2bdde775f-16p.png" />
+                </Avatar>
+                <p className="text-sm">Barbearia FSW</p>
+              </div>
+            </div>
+            {/* Direito */}
+            <div className="flex flex-col items-center justify-center border-l-2 border-solid px-5">
+              <p className="text-sm">Agosto</p>
+              <p className="text-2xl">05</p>
+              <p className="text-sm">20:00</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
