@@ -12,14 +12,21 @@ import BookingItem from "@/components/booking-item"
 // Todo: Receber agendamento como Props
 
 const Home = async () => {
-  // chamar meu banco de dados
-  const barbershops = await prisma.barbershop.findMany({})
+  let barbershops = []
+  let popularBarbershops = []
 
-  const popularBarbershops = await prisma.barbershop.findMany({
-    orderBy: {
-      name: "desc",
-    },
-  })
+  try {
+    ;[barbershops, popularBarbershops] = await Promise.all([
+      prisma.barbershop.findMany({}),
+      prisma.barbershop.findMany({
+        orderBy: {
+          name: "desc",
+        },
+      }),
+    ])
+  } catch (error) {
+    console.error("Erro ao carregar barbearias:", error)
+  }
 
   return (
     <div>
@@ -76,6 +83,11 @@ const Home = async () => {
             <BarbershopItem key={barbershop.id} barbershop={barbershop} />
           ))}
         </div>
+        {barbershops.length === 0 && (
+          <p className="text-sm text-gray-400">
+            Nenhuma barbearia encontrada no momento.
+          </p>
+        )}
 
         <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
           Populares
@@ -86,6 +98,11 @@ const Home = async () => {
             <BarbershopItem key={barbershop.id} barbershop={barbershop} />
           ))}
         </div>
+        {popularBarbershops.length === 0 && (
+          <p className="text-sm text-gray-400">
+            Nenhuma barbearia popular disponivel no momento.
+          </p>
+        )}
       </div>
     </div>
   )
