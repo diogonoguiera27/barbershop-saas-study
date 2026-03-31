@@ -1,32 +1,22 @@
 import { Button } from "@/components/ui/button"
 
 import Header from "@/components/header"
-import { Input } from "@/components/ui/input"
-import { SearchIcon } from "lucide-react"
 import Image from "next/image"
 import { prisma } from "@/app/_lib/prisma"
 import BarbershopItem from "@/components/barbershop-item"
 import { quickSearchOptions } from "./_constants/search"
 import BookingItem from "@/components/booking-item"
+import Search from "@/components/search"
 
 // Todo: Receber agendamento como Props
 
 const Home = async () => {
-  let barbershops = []
-  let popularBarbershops = []
-
-  try {
-    ;[barbershops, popularBarbershops] = await Promise.all([
-      prisma.barbershop.findMany({}),
-      prisma.barbershop.findMany({
-        orderBy: {
-          name: "desc",
-        },
-      }),
-    ])
-  } catch (error) {
-    console.error("Erro ao carregar barbearias:", error)
-  }
+  const barbershops = await prisma.barbershop.findMany({})
+  const popularBarbershops = await prisma.barbershop.findMany({
+    orderBy: {
+      name: "desc",
+    },
+  })
 
   return (
     <div>
@@ -39,11 +29,8 @@ const Home = async () => {
         <p>Segunda Feira, 05 de agosto</p>
 
         {/*Busca */}
-        <div className="mt-6 flex items-center gap-2">
-          <Input placeholder="Faça Sua busca..." />
-          <Button>
-            <SearchIcon />
-          </Button>
+        <div className="mt-6">
+          <Search />
         </div>
 
         {/*Buscar rapida */}
