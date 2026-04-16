@@ -13,14 +13,15 @@ import {
 } from "./ui/sheet"
 import { Calendar } from "./ui/calendar"
 import { ptBR } from "date-fns/locale"
-import { useEffect, useState } from "react"
-import { format, set } from "date-fns"
+import { useEffect, useMemo, useState } from "react"
+import { isPast, isToday, set } from "date-fns"
 import { useSession } from "next-auth/react"
 import { createBooking } from "@/app/_actions/create-booking"
 import { toast } from "sonner"
 import { getBookings } from "@/app/_actions/get-bookings"
 import { Dialog, DialogContent } from "./ui/dialog"
 import SignInDialog from "./sign-in-dialog"
+import BookingSummary from "./booking-summary"
 
 interface ServiceItemPros {
   service: BarbershopeService
@@ -51,17 +52,26 @@ const TIME_LIST = [
   "18:00",
 ]
 
-const getTimeList = (bookings: Booking[]) => {
+interface GetTimeListProps {
+  bookings: Booking[]
+  selectedDay: Date
+}
+
+const getTimeList = ({ bookings, selectedDay }: GetTimeListProps) => {
   return TIME_LIST.filter((time) => {
     const hour = Number(time.split(":")[0])
     const minutes = Number(time.split(":")[1])
 
-    const hasBookingOnCurrentTime = bookings.some((booking) => {
-      return (
+    const timeIsOnThePast = isPast(set(new Date(), { hours: hour, minutes }))
+    if (timeIsOnThePast && isToday(selectedDay)) {
+      return false
+    }
+
+    const hasBookingOnCurrentTime = bookings.some(
+      (booking) =>
         booking.date.getHours() === hour &&
-        booking.date.getMinutes() === minutes
-      )
-    })
+        booking.date.getMinutes() === minutes,
+    )
     if (hasBookingOnCurrentTime) {
       return false
     }
@@ -91,6 +101,24 @@ const ServiceItem = ({ service, barbershop }: ServiceItemPros) => {
     fetch()
   }, [selectedDay, service.id])
 
+  const selectedDate = useMemo(() => {
+    if (!selectedDay || !selectedTime) return
+
+    return set(selectedDay, {
+      minutes: Number(selectedTime.split(":")[1]),
+      hours: Number(selectedTime.split(":")[0]),
+    })
+  }, [selectedDay, selectedTime])
+
+  const timeList = useMemo(() => {
+    if (!selectedDay) return []
+
+    return getTimeList({
+      bookings: dayBookings,
+      selectedDay,
+    })
+  }, [dayBookings, selectedDay])
+
   const handleBookingClick = () => {
     if (data?.user) {
       return setBookingSheetIsOpen(true)
@@ -115,14 +143,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemPros) => {
 
   const handleBooking = async () => {
     try {
-      if (!selectedDay || !selectedTime) return
-
-      const hour = Number(selectedTime.split(":")[0])
-      const minute = Number(selectedTime.split(":")[1])
-      const newDate = set(selectedDay, {
-        minutes: minute,
-        hours: hour,
-      })
+      if (!selectedDate) return
 
       if (!data?.user?.id) {
         toast.error("Faça login para criar uma reserva!")
@@ -133,7 +154,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemPros) => {
         barbershopId: barbershop.id,
         serviceId: service.id,
         userId: data.user.id,
-        date: newDate,
+        date: selectedDate,
       })
       handleBookingSheetOpenChange()
       toast.success("Reserva criada com sucesso!")
@@ -181,7 +202,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemPros) => {
                   Reservar
                 </Button>
                 <SheetContent className="px-0">
-                  <SheetHeader>
+                  <SheetHeader className="text-center">
                     <SheetTitle>Fazer Reserva</SheetTitle>
                   </SheetHeader>
 
@@ -191,7 +212,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemPros) => {
                       locale={ptBR}
                       selected={selectedDay}
                       onSelect={handleDateSelect}
-                      hidden={{ before: new Date() }}
+                      fromDate={new Date()}
                       styles={{
                         head_cell: {
                           width: "100%",
@@ -218,61 +239,40 @@ const ServiceItem = ({ service, barbershop }: ServiceItemPros) => {
                     />
                   </div>
 
-                  {selectedDay && selectedDay && (
-                    <div className="flex gap-3 overflow-x-auto border-b border-solid p-5 [&::-webkit-scrollbar]:hidden">
-                      {getTimeList(dayBookings).map((time) => (
-                        <Button
-                          key={time}
-                          variant={
-                            selectedTime === time ? "default" : "outline"
-                          }
-                          className="rounden-full"
-                          onClick={() => handleTimeSelect(time)}
-                        >
-                          {time}
-                        </Button>
-                      ))}
+                  {selectedDay && (
+                    <div className="flex items-center gap-3 overflow-x-auto overflow-y-hidden border-b border-solid p-5 [&::-webkit-scrollbar]:hidden">
+                      {timeList.length > 0 ? (
+                        timeList.map((time) => (
+                          <Button
+                            key={time}
+                            variant={
+                              selectedTime === time ? "default" : "outline"
+                            }
+                            className="shrink-0 rounded-full"
+                            onClick={() => handleTimeSelect(time)}
+                          >
+                            {time}
+                          </Button>
+                        ))
+                      ) : (
+                        <p className="text-xs">
+                          Não há horários disponíveis para este dia.
+                        </p>
+                      )}
                     </div>
                   )}
 
-                  {selectedDay && selectedTime && (
-                    <div className="space-y-3 p-5">
-                      <Card>
-                        <CardContent className="p-3">
-                          <div className="flex items-center justify-between">
-                            <h2 className="font-bold">{service.name}</h2>
-                            <p className="text-sm font-bold">
-                              {Intl.NumberFormat("pt-BR", {
-                                style: "currency",
-                                currency: "BRL",
-                              }).format(Number(service.price))}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <h2 className="text-sm text-gray-400">Data</h2>
-                            <p className="text-sm">
-                              {format(selectedDay, "d 'de' MMMM", {
-                                locale: ptBR,
-                              })}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <h2 className="text-sm text-gray-400">Horario</h2>
-                            <p className="text-sm">{selectedTime}</p>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <h2 className="text-sm text-gray-400">Barbearia</h2>
-                            <p className="text-sm">{barbershop.name}</p>
-                          </div>
-                        </CardContent>
-                      </Card>
+                  {selectedDate && (
+                    <div className="p-5">
+                      <BookingSummary
+                        barbershop={barbershop}
+                        service={service}
+                        selectedDate={selectedDate}
+                      />
                     </div>
                   )}
 
-                  <SheetFooter className="px-5">
+                  <SheetFooter className="mt-5 px-5">
                     <Button
                       onClick={handleBooking}
                       disabled={!selectedDay || !selectedTime}
