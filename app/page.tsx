@@ -8,16 +8,38 @@ import { quickSearchOptions } from "./_constants/search"
 import BookingItem from "@/components/booking-item"
 import Search from "@/components/search"
 import Link from "next/link"
-
-// Todo: Receber agendamento como Props
+import { getServerSession } from "next-auth"
+import { authOptions } from "./_lib/auth"
 
 const Home = async () => {
+  const session = await getServerSession(authOptions)
   const barbershops = await prisma.barbershop.findMany({})
   const popularBarbershops = await prisma.barbershop.findMany({
     orderBy: {
       name: "desc",
     },
   })
+
+  const confirmedBookings = session?.user
+    ? await prisma.booking.findMany({
+        where: {
+          userId: session?.user?.id,
+          date: {
+            gt: new Date(),
+          },
+        },
+        include: {
+          service: {
+            include: {
+              barbershop: true,
+            },
+          },
+        },
+        orderBy: {
+          date: "asc",
+        },
+      })
+    : []
 
   return (
     <div>
@@ -66,8 +88,16 @@ const Home = async () => {
           />
         </div>
 
+        <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
+          Agendamentos
+        </h2>
+
         {/* Agendamento */}
-        <BookingItem />
+        <div className="flex gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden">
+          {confirmedBookings.map((booking) => (
+            <BookingItem key={booking.id} booking={booking} />
+          ))}
+        </div>
 
         <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
           Recomendados
