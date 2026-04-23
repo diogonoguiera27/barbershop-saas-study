@@ -31,6 +31,7 @@ import {
 import { deleteBooking } from "@/app/_actions/delete-booking"
 import { toast } from "sonner"
 import { useState } from "react"
+import BookingSummary from "./booking-summary"
 
 interface BookingItemProps {
   booking: Prisma.BookingGetPayload<{
@@ -49,14 +50,14 @@ const BookingItem = ({ booking }: BookingItemProps) => {
     service: { barbershop },
   } = booking
   const isConfirmed = isFuture(booking.date)
-  const handlecancelBooking = async () => {
+  const handleCancelBooking = async () => {
     try {
       await deleteBooking(booking.id)
       setIsSheetOpen(false)
-      toast.success("Reserva cancelada com sucesso")
+      toast.success("Reserva cancelada com sucesso!")
     } catch (error) {
       console.error(error)
-      toast.error("Erro ao Cancelar reserva. Tente Novamente.")
+      toast.error("Erro ao cancelar reserva. Tente novamente.")
     }
   }
 
@@ -65,7 +66,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
   }
   return (
     <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-      <SheetTrigger className="w-full">
+      <SheetTrigger className="w-full min-w-[90%]">
         <Card className="min-w-[90%]">
           <CardContent className="flex justify-between p-0">
             {/* Esquerdo */}
@@ -105,28 +106,30 @@ const BookingItem = ({ booking }: BookingItemProps) => {
           <SheetTitle className="text-left">Informações da Reserva</SheetTitle>
         </SheetHeader>
 
-        <div className="relative mt-6 h-[180px] w-full items-end">
-          <Image
-            src="/map.png"
-            fill
-            className="rounded-xl object-cover"
-            alt={`mapa da barbearia ${booking.service.barbershop.name}`}
-          />
+        <div className="mt-6 px-4">
+          <div className="relative h-[180px] w-full">
+            <Image
+              src="/map.png"
+              fill
+              className="rounded-xl object-cover"
+              alt={`mapa da barbearia ${booking.service.barbershop.name}`}
+            />
 
-          <Card className="z-50 mx-5 mb-3 w-full rounded-xl">
-            <CardContent className="flex items-center gap-3 px-5 py-3">
-              <Avatar>
-                <AvatarImage src={barbershop.imageUrl} />
-              </Avatar>
-              <div>
-                <h3 className="font-bold">{barbershop.name}</h3>
-                <p className="text-xs">{barbershop.address}</p>
-              </div>
-            </CardContent>
-          </Card>
+            <Card className="absolute bottom-3 left-3 right-3 z-50 gap-0 rounded-xl py-0">
+              <CardContent className="flex items-center gap-3 px-4 py-2">
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={barbershop.imageUrl} />
+                </Avatar>
+                <div>
+                  <h3 className="text-sm font-bold">{barbershop.name}</h3>
+                  <p className="text-xs">{barbershop.address}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        <div className="mt-6">
+        <div className="mt-6 px-4">
           <Badge
             className="w-fit"
             variant={isConfirmed ? "default" : "secondary"}
@@ -134,38 +137,13 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             {isConfirmed ? "Confirmado" : "Finalizado"}
           </Badge>
 
-          <Card className="mb-6 mt-3">
-            <CardContent className="space-y-3 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="font-bold">{booking.service.name}</h2>
-                <p className="text-sm font-bold">
-                  {Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  }).format(Number(booking.service.price))}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm text-gray-400">Data</h2>
-                <p className="text-sm">
-                  {format(booking.date, "d 'de' MMMM", {
-                    locale: ptBR,
-                  })}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm text-gray-400">Horário</h2>
-                <p className="text-sm">{format(booking.date, "HH:mm")}</p>
-              </div>
-
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm text-gray-400">Barbearia</h2>
-                <p className="text-sm">{barbershop.name}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mb-3 mt-6">
+            <BookingSummary
+              barbershop={barbershop}
+              service={booking.service}
+              selectedDate={booking.date}
+            />
+          </div>
 
           <div className="space-y-3">
             {barbershop.phones.map((phone, index) => (
@@ -174,35 +152,39 @@ const BookingItem = ({ booking }: BookingItemProps) => {
           </div>
         </div>
 
-        <SheetFooter>
-          <div className="flex items-center gap-3">
-            <SheetClose asChild></SheetClose>
+        <SheetFooter className="mt-6">
+          <div className="flex w-full items-center gap-3">
+            <SheetClose asChild>
+              <Button variant="outline" className="flex-1">
+                Voltar
+              </Button>
+            </SheetClose>
             {isConfirmed && (
               <Dialog>
-                <DialogTrigger className="w-full">
-                  <Button variant="destructive" className="w-full">
-                    Cancelar reserva
+                <DialogTrigger asChild>
+                  <Button variant="destructive" className="flex-1">
+                    Cancelar Reserva
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="w-[90%]">
                   <DialogHeader>
-                    <DialogTitle>Voce deseja cancelar sua reserva?</DialogTitle>
+                    <DialogTitle>Você deseja cancelar sua reserva?</DialogTitle>
                     <DialogDescription>
-                      Ao cancelar, voce perdera sua reserva e nao podera
-                      recupera-la. Essa ação e irreversivel
+                      Ao cancelar, você perderá sua reserva e não poderá
+                      recuperá-la. Essa ação é irreversível.
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter className="flex flex-row gap-3">
                     <DialogClose asChild>
-                      <Button variant="secondary" className="w-full">
+                      <Button variant="secondary" className="flex-1">
                         Voltar
                       </Button>
                     </DialogClose>
-                    <DialogClose className="w-full">
+                    <DialogClose asChild>
                       <Button
                         variant="destructive"
-                        className="w-full"
-                        onClick={handlecancelBooking}
+                        className="flex-1"
+                        onClick={handleCancelBooking}
                       >
                         Confirmar
                       </Button>

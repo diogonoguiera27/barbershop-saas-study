@@ -7,12 +7,23 @@ import BookingItem from "@/components/booking-item"
 
 const Bookings = async () => {
   const session = await getServerSession(authOptions)
-  if (!session?.user) {
+  if (!session?.user?.email) {
     return notFound()
   }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      email: session.user.email,
+    },
+  })
+
+  if (!user) {
+    return notFound()
+  }
+
   const confirmedBookings = await prisma.booking.findMany({
     where: {
-      userId: session.user.id,
+      userId: user.id,
       date: {
         gt: new Date(),
       },
@@ -30,7 +41,7 @@ const Bookings = async () => {
   })
   const concludedBookings = await prisma.booking.findMany({
     where: {
-      userId: session.user.id,
+      userId: user.id,
       date: {
         lt: new Date(),
       },

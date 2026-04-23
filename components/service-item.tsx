@@ -153,7 +153,6 @@ const ServiceItem = ({ service, barbershop }: ServiceItemPros) => {
       await createBooking({
         barbershopId: barbershop.id,
         serviceId: service.id,
-        userId: data.user.id,
         date: selectedDate,
       })
       handleBookingSheetOpenChange()
