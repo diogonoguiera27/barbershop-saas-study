@@ -22,10 +22,18 @@ const Home = async () => {
     },
   })
 
-  const confirmedBookings = session?.user
+  const user = session?.user?.email
+    ? await prisma.user.findFirst({
+        where: {
+          email: session.user.email,
+        },
+      })
+    : null
+
+  const confirmedBookings = user
     ? await prisma.booking.findMany({
         where: {
-          userId: session?.user?.id,
+          userId: user.id,
           date: {
             gt: new Date(),
           },
@@ -100,16 +108,20 @@ const Home = async () => {
           />
         </div>
 
-        <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
-          Agendamentos
-        </h2>
+        {confirmedBookings.length > 0 && (
+          <>
+            <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
+              Agendamentos
+            </h2>
 
-        {/* Agendamento */}
-        <div className="flex gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden">
-          {confirmedBookings.map((booking) => (
-            <BookingItem key={booking.id} booking={booking} />
-          ))}
-        </div>
+            {/* Agendamento */}
+            <div className="flex gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden">
+              {confirmedBookings.map((booking) => (
+                <BookingItem key={booking.id} booking={booking} />
+              ))}
+            </div>
+          </>
+        )}
 
         <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
           Recomendados
