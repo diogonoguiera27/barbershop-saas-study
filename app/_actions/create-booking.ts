@@ -18,6 +18,8 @@ export const createBooking = async (params: CreateBookingParams) => {
     throw new Error("usuario nao Autenticado")
   }
 
+  const userName = session.user.name ?? session.user.email.split("@")[0]
+
   let user = await prisma.user.findFirst({
     where: { email: session.user.email },
   })
@@ -26,7 +28,7 @@ export const createBooking = async (params: CreateBookingParams) => {
     user = await prisma.user.create({
       data: {
         email: session.user.email,
-        name: session.user.name,
+        name: userName,
       },
     })
   }
