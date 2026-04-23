@@ -24,4 +24,5 @@ export const createBooking = async (params: CreateBookingParams) => {
   })
 
   revalidatePath(`/barbershops/${params.barbershopId}`)
+  revalidatePath("/bookings")
 }
